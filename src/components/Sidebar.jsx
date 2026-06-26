@@ -1,0 +1,40 @@
+import { NavLink } from 'react-router-dom'
+import { useAppContext } from '../context/AppContext'
+
+export default function Sidebar() {
+  const { state, dispatch } = useAppContext()
+  const theme = state.settings.theme
+
+  return (
+    <aside className="sidebar">
+      <div className="sidebar-logo">FinTrack</div>
+      <nav className="sidebar-nav">
+        <NavLink to="/" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          <span>Overview</span>
+        </NavLink>
+        <NavLink to="/income" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2v20M17 7l-5-5-5 5"/></svg>
+          <span>Income</span>
+        </NavLink>
+        <NavLink to="/expenses" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 22V2M7 17l5 5 5-5"/></svg>
+          <span>Expenses</span>
+        </NavLink>
+        <NavLink to="/recurring" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+          <span>Subscriptions</span>
+        </NavLink>
+        <NavLink to="/categories" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          <span>Spending Plan</span>
+        </NavLink>
+      </nav>
+      <div className="sidebar-bottom">
+        <button className="theme-toggle" onClick={() => dispatch({ type: 'UPDATE_SETTINGS', payload: { theme: theme === 'dark' ? 'light' : 'dark' } })}>
+          {theme === 'dark' ? '☀️ Light mode' : '🌙 Dark mode'}
+        </button>
+      </div>
+    </aside>
+  )
+}
