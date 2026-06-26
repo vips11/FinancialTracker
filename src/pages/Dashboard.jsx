@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext'
 import { formatCurrency, getCurrentMonth, getMonthLabel, shiftMonth } from '../utils/helpers'
-import { getCategoryBudgetStatuses } from '../services/budgetService'
+import { getCategoryBudgetStatuses, getOverallBudgetForMonth } from '../services/budgetService'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import MonthPicker from '../components/MonthPicker'
 
@@ -14,8 +14,8 @@ export default function Dashboard() {
   const monthTx = state.transactions.filter((t) => t.date.startsWith(month))
   const income = monthTx.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
   const expenses = monthTx.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
-  const budget = state.settings.monthlyBudget
-  const categoryStatuses = getCategoryBudgetStatuses(state.transactions, state.categories, month)
+  const budget = getOverallBudgetForMonth(month, state.monthlyBudgets, state.settings)
+  const categoryStatuses = getCategoryBudgetStatuses(state.transactions, state.categories, month, state.monthlyBudgets)
   const totalBudget = state.categories.reduce((s, c) => s + (c.budget || 0), 0) || budget
 
   const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']

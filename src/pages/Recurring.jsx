@@ -6,6 +6,7 @@ import { formatCurrency } from '../utils/helpers'
 export default function Recurring() {
   const { state, dispatch } = useAppContext()
   const [showForm, setShowForm] = useState(false)
+  const [editingRec, setEditingRec] = useState(null)
   const [sortKey, setSortKey] = useState('name')
   const [sortDir, setSortDir] = useState('asc')
   const [groupByCategory, setGroupByCategory] = useState(false)
@@ -41,16 +42,27 @@ export default function Recurring() {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!form.name || !form.amount) return
-    dispatch({ type: 'ADD_RECURRING', payload: createRecurringExpense(form) })
+    if (editingRec) {
+      dispatch({ type: 'UPDATE_RECURRING', payload: { id: editingRec.id, name: form.name, amount: Number(form.amount), frequency: form.frequency, categoryId: form.categoryId } })
+      setEditingRec(null)
+    } else {
+      dispatch({ type: 'ADD_RECURRING', payload: createRecurringExpense(form) })
+    }
     setForm({ name: '', amount: '', frequency: 'monthly', categoryId: '' })
     setShowForm(false)
+  }
+
+  const startEdit = (r) => {
+    setEditingRec(r)
+    setForm({ name: r.name, amount: r.amount, frequency: r.frequency, categoryId: r.categoryId || '' })
+    setShowForm(true)
   }
 
   return (
     <div>
       <div className="page-header">
         <h1>Subscriptions</h1>
-        <button className="btn btn-primary" onClick={() => setShowForm(true)}>+ Add</button>
+        <button className="btn btn-primary" onClick={() => { setEditingRec(null); setForm({ name: '', amount: '', frequency: 'monthly', categoryId: '' }); setShowForm(true) }}>+ Add</button>
       </div>
 
       <div className="card" style={{ marginBottom: '1.5rem' }}>
@@ -87,7 +99,7 @@ export default function Recurring() {
                         <td><span className="table-name">{r.name}</span></td>
                         <td><span className="tx-badge">{r.frequency.charAt(0).toUpperCase() + r.frequency.slice(1)}</span></td>
                         <td style={{ textAlign: 'right' }}><span className="table-amount expense">{formatCurrency(r.amount)}</span></td>
-                        <td><button className="del-btn always" onClick={() => dispatch({ type: 'DELETE_RECURRING', payload: r.id })}>✕</button></td>
+                        <td style={{ display: "flex", gap: "0.25rem" }}><button className="del-btn always" onClick={() => startEdit(r)}>✎</button><button className="del-btn always" onClick={() => dispatch({ type: "DELETE_RECURRING", payload: r.id })}>✕</button></td>
                       </tr>
                     ))}
                   </tbody>
@@ -105,7 +117,7 @@ export default function Recurring() {
                       <td><span className="table-name">{r.name}</span></td>
                       <td><span className="tx-badge">{r.frequency.charAt(0).toUpperCase() + r.frequency.slice(1)}</span></td>
                       <td style={{ textAlign: 'right' }}><span className="table-amount expense">{formatCurrency(r.amount)}</span></td>
-                      <td><button className="del-btn always" onClick={() => dispatch({ type: 'DELETE_RECURRING', payload: r.id })}>✕</button></td>
+                      <td style={{ display: "flex", gap: "0.25rem" }}><button className="del-btn always" onClick={() => startEdit(r)}>✎</button><button className="del-btn always" onClick={() => dispatch({ type: "DELETE_RECURRING", payload: r.id })}>✕</button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -142,7 +154,7 @@ export default function Recurring() {
                   <td><span className="tx-badge">{cat?.name || '—'}</span></td>
                   <td><span className="tx-badge">{r.frequency.charAt(0).toUpperCase() + r.frequency.slice(1)}</span></td>
                   <td style={{ textAlign: 'right' }}><span className="table-amount expense">{formatCurrency(r.amount)}</span></td>
-                  <td><button className="del-btn always" onClick={() => dispatch({ type: 'DELETE_RECURRING', payload: r.id })}>✕</button></td>
+                  <td style={{ display: "flex", gap: "0.25rem" }}><button className="del-btn always" onClick={() => startEdit(r)}>✎</button><button className="del-btn always" onClick={() => dispatch({ type: "DELETE_RECURRING", payload: r.id })}>✕</button></td>
                 </tr>
               )
             })}
@@ -154,7 +166,7 @@ export default function Recurring() {
       {showForm && (
         <div className="modal-overlay" onClick={() => setShowForm(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Add Subscription</h3>
+            <h3>{editingRec ? 'Edit Subscription' : 'Add Subscription'}</h3>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label>Name</label>

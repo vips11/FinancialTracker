@@ -12,6 +12,7 @@ function formatDate(dateStr) {
 export default function Expenses() {
   const { state, dispatch } = useAppContext()
   const [showForm, setShowForm] = useState(false)
+  const [editingTx, setEditingTx] = useState(null)
   const [month, setMonth] = useState(getCurrentMonth())
   const [selectedDate, setSelectedDate] = useState(null)
   const [sortKey, setSortKey] = useState('date')
@@ -47,19 +48,27 @@ export default function Expenses() {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!form.amount || !form.categoryId) return
-    dispatch({
-      type: 'ADD_TRANSACTION',
-      payload: createTransaction({ amount: form.amount, type: 'expense', categoryId: form.categoryId, date: form.date, note: form.note }),
-    })
+    if (editingTx) {
+      dispatch({ type: 'UPDATE_TRANSACTION', payload: { id: editingTx.id, amount: Number(form.amount), categoryId: form.categoryId, date: form.date, note: form.note } })
+      setEditingTx(null)
+    } else {
+      dispatch({ type: 'ADD_TRANSACTION', payload: createTransaction({ amount: form.amount, type: 'expense', categoryId: form.categoryId, date: form.date, note: form.note }) })
+    }
     setForm({ amount: '', categoryId: '', date: new Date().toISOString().slice(0, 10), note: '' })
     setShowForm(false)
+  }
+
+  const startEdit = (t) => {
+    setEditingTx(t)
+    setForm({ amount: t.amount, categoryId: t.categoryId || '', date: t.date, note: t.note || '' })
+    setShowForm(true)
   }
 
   return (
     <div>
       <div className="page-header">
         <h1>Expenses</h1>
-        <button className="btn btn-primary" onClick={() => setShowForm(true)}>+ Add Expense</button>
+        <button className="btn btn-primary" onClick={() => { setEditingTx(null); setForm({ amount: '', categoryId: '', date: new Date().toISOString().slice(0, 10), note: '' }); setShowForm(true) }}>+ Add Expense</button>
       </div>
 
       <MonthPicker month={month} setMonth={(m) => { setMonth(m); setSelectedDate(null) }} transactions={state.transactions.filter(t => t.type === 'expense' && t.date.startsWith(month))} onDateSelect={setSelectedDate} />
@@ -98,7 +107,7 @@ export default function Expenses() {
                         <td><span className="table-name">{t.note || 'Expense'}</span></td>
                         <td className="table-muted">{formatDate(t.date)}</td>
                         <td style={{ textAlign: 'right' }}><span className="table-amount expense">–{formatCurrency(t.amount)}</span></td>
-                        <td><button className="del-btn always" onClick={() => dispatch({ type: 'DELETE_TRANSACTION', payload: t.id })}>✕</button></td>
+                        <td style={{ display: "flex", gap: "0.25rem" }}><button className="del-btn always" onClick={() => startEdit(t)}>✎</button><button className="del-btn always" onClick={() => dispatch({ type: "DELETE_TRANSACTION", payload: t.id })}>✕</button></td>
                       </tr>
                     ))}
                   </tbody>
@@ -116,7 +125,7 @@ export default function Expenses() {
                       <td><span className="table-name">{t.note || 'Expense'}</span></td>
                       <td className="table-muted">{formatDate(t.date)}</td>
                       <td style={{ textAlign: 'right' }}><span className="table-amount expense">–{formatCurrency(t.amount)}</span></td>
-                      <td><button className="del-btn always" onClick={() => dispatch({ type: 'DELETE_TRANSACTION', payload: t.id })}>✕</button></td>
+                      <td style={{ display: "flex", gap: "0.25rem" }}><button className="del-btn always" onClick={() => startEdit(t)}>✎</button><button className="del-btn always" onClick={() => dispatch({ type: "DELETE_TRANSACTION", payload: t.id })}>✕</button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -153,7 +162,7 @@ export default function Expenses() {
                   <td><span className="tx-badge">{cat?.name || 'Uncategorized'}</span></td>
                   <td className="table-muted">{formatDate(t.date)}</td>
                   <td style={{ textAlign: 'right' }}><span className="table-amount expense">–{formatCurrency(t.amount)}</span></td>
-                  <td><button className="del-btn always" onClick={() => dispatch({ type: 'DELETE_TRANSACTION', payload: t.id })}>✕</button></td>
+                  <td style={{ display: "flex", gap: "0.25rem" }}><button className="del-btn always" onClick={() => startEdit(t)}>✎</button><button className="del-btn always" onClick={() => dispatch({ type: "DELETE_TRANSACTION", payload: t.id })}>✕</button></td>
                 </tr>
               )
             })}
@@ -165,7 +174,7 @@ export default function Expenses() {
       {showForm && (
         <div className="modal-overlay" onClick={() => setShowForm(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Add Expense</h3>
+            <h3>{editingTx ? 'Edit Expense' : 'Add Expense'}</h3>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label>Name</label>

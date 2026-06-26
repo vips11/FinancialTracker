@@ -2,8 +2,10 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext'
 import { createCategory } from '../utils/models'
-import { formatCurrency, getCurrentMonth } from '../utils/helpers'
+import { formatCurrency, getCurrentMonth, getMonthLabel } from '../utils/helpers'
+import { getCategoryBudgetForMonth, getOverallBudgetForMonth } from '../services/budgetService'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import MonthPicker from '../components/MonthPicker'
 
 const COLORS = ['#7b61ff', '#5b8def', '#2d9f5f', '#d94452', '#e5a52e', '#00b8d9', '#e84393', '#a29bfe', '#2ed573', '#ffc048']
 
@@ -15,9 +17,11 @@ export default function Categories() {
   const [budgetValue, setBudgetValue] = useState('')
   const [form, setForm] = useState({ name: '', color: COLORS[0], budget: '' })
   const [editBudget, setEditBudget] = useState(null)
+  const [month, setMonth] = useState(getCurrentMonth())
 
-  const month = getCurrentMonth()
+  const overallBudget = getOverallBudgetForMonth(month, state.monthlyBudgets, state.settings)
 
+  // Pie chart data — spending per category this month
   const pieData = state.categories.map((cat) => {
     const spent = state.transactions
       .filter((t) => t.type === 'expense' && t.categoryId === cat.id && t.date.startsWith(month))
@@ -34,13 +38,13 @@ export default function Categories() {
   }
 
   const handleBudgetSave = (cat) => {
-    dispatch({ type: 'UPDATE_CATEGORY', payload: { ...cat, budget: Number(editBudget.value) } })
+    dispatch({ type: 'SET_MONTHLY_BUDGET', payload: { month, categoryId: cat.id, budget: Number(editBudget.value) } })
     setEditBudget(null)
   }
 
   const handleOverallBudgetSave = (e) => {
     e.preventDefault()
-    dispatch({ type: 'UPDATE_SETTINGS', payload: { monthlyBudget: Number(budgetValue) } })
+    dispatch({ type: 'SET_MONTHLY_OVERALL_BUDGET', payload: { month, budget: Number(budgetValue) } })
     setShowBudgetModal(false)
   }
 
@@ -50,6 +54,8 @@ export default function Categories() {
         <h1>Spending Plan</h1>
         <button className="btn btn-primary" onClick={() => setShowForm(true)}>+ Add Category</button>
       </div>
+
+      <MonthPicker month={month} setMonth={setMonth} transactions={state.transactions.filter(t => t.type === 'expense' && t.date.startsWith(month))} />
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
         <div className="card">
@@ -74,16 +80,16 @@ export default function Categories() {
         <div className="card">
           <div className="card-header">
             <h3>Budget Allocation</h3>
-            <button className="btn btn-outline" style={{ fontSize: '0.7rem', padding: '0.3rem 0.7rem' }} onClick={() => { setBudgetValue(state.settings.monthlyBudget || ''); setShowBudgetModal(true) }}>
-              {state.settings.monthlyBudget ? 'Change' : 'Set Budget'}
+            <button className="btn btn-outline" style={{ fontSize: '0.7rem', padding: '0.3rem 0.7rem' }} onClick={() => { setBudgetValue(overallBudget || ''); setShowBudgetModal(true) }}>
+              {overallBudget ? 'Change' : 'Set Budget'}
             </button>
           </div>
           {(() => {
-            const totalAllocated = state.categories.reduce((s, c) => s + (c.budget || 0), 0)
-            const overallBudget = state.settings.monthlyBudget || totalAllocated
-            const unallocated = Math.max(overallBudget - totalAllocated, 0)
+            const totalAllocated = state.categories.reduce((s, c) => s + getCategoryBudgetForMonth(c, month, state.monthlyBudgets), 0)
+            const overallB = overallBudget || totalAllocated
+            const unallocated = Math.max(overallB - totalAllocated, 0)
             const budgetPieData = [
-              ...state.categories.filter(c => c.budget > 0).map(c => ({ name: c.name, value: c.budget, color: c.color })),
+              ...state.categories.filter(c => getCategoryBudgetForMonth(c, month, state.monthlyBudgets) > 0).map(c => ({ name: c.name, value: getCategoryBudgetForMonth(c, month, state.monthlyBudgets), color: c.color })),
               ...(unallocated > 0 ? [{ name: 'Unallocated', value: unallocated, color: '#e0e0e0' }] : []),
             ]
             return budgetPieData.length > 0 ? (
@@ -145,8 +151,8 @@ export default function Categories() {
                       <button type="submit" className="btn btn-primary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.7rem' }}>Save</button>
                     </form>
                   ) : (
-                    <button className="btn btn-outline" style={{ fontSize: '0.7rem', padding: '0.3rem 0.7rem' }} onClick={() => setEditBudget({ id: cat.id, value: cat.budget || '' })}>
-                      {cat.budget ? formatCurrency(cat.budget) : 'Set'}
+                    <button className="btn btn-outline" style={{ fontSize: '0.7rem', padding: '0.3rem 0.7rem' }} onClick={() => setEditBudget({ id: cat.id, value: getCategoryBudgetForMonth(cat, month, state.monthlyBudgets) || '' })}>
+                      {getCategoryBudgetForMonth(cat, month, state.monthlyBudgets) ? formatCurrency(getCategoryBudgetForMonth(cat, month, state.monthlyBudgets)) : 'Set'}
                     </button>
                   )}
                 </td>
