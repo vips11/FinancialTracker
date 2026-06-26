@@ -584,3 +584,11 @@ a { color: inherit; text-decoration: none; }
   background: var(--orange);
 }
 .cal-body .rdp-day { position: relative; }
+
+/* Remove focus outline on Recharts pie */
+.recharts-sector, .recharts-pie, .recharts-surface, .recharts-wrapper {
+  outline: none !important;
+}
+.recharts-sector:focus, .recharts-pie:focus {
+  outline: none !important;
+}

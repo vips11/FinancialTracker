@@ -61,8 +61,8 @@ export default function Categories() {
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
-                <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value">
-                  {pieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value" activeIndex={-1}>
+                  {pieData.map((entry, i) => <Cell key={i} fill={entry.color} stroke="none" />)}
                 </Pie>
                 <Tooltip formatter={(v) => formatCurrency(v)} />
                 <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '0.72rem' }} />
@@ -73,19 +73,44 @@ export default function Categories() {
 
         <div className="card">
           <div className="card-header">
-            <h3>Monthly Budget</h3>
+            <h3>Budget Allocation</h3>
             <button className="btn btn-outline" style={{ fontSize: '0.7rem', padding: '0.3rem 0.7rem' }} onClick={() => { setBudgetValue(state.settings.monthlyBudget || ''); setShowBudgetModal(true) }}>
               {state.settings.monthlyBudget ? 'Change' : 'Set Budget'}
             </button>
           </div>
-          {state.settings.monthlyBudget > 0 ? (
-            <div className="summary-stat">
-              <div className="label">Overall Budget</div>
-              <div className="value" style={{ color: 'var(--orange)' }}>{formatCurrency(state.settings.monthlyBudget)}</div>
-            </div>
-          ) : (
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No budget set. Click "Set Budget" to add one.</p>
-          )}
+          {(() => {
+            const totalAllocated = state.categories.reduce((s, c) => s + (c.budget || 0), 0)
+            const overallBudget = state.settings.monthlyBudget || totalAllocated
+            const unallocated = Math.max(overallBudget - totalAllocated, 0)
+            const budgetPieData = [
+              ...state.categories.filter(c => c.budget > 0).map(c => ({ name: c.name, value: c.budget, color: c.color })),
+              ...(unallocated > 0 ? [{ name: 'Unallocated', value: unallocated, color: '#e0e0e0' }] : []),
+            ]
+            return budgetPieData.length > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height={180}>
+                  <PieChart>
+                    <Pie data={budgetPieData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={2} dataKey="value" activeIndex={-1}>
+                      {budgetPieData.map((entry, i) => <Cell key={i} fill={entry.color} stroke="none" />)}
+                    </Pie>
+                    <Tooltip formatter={(v) => formatCurrency(v)} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.75rem', fontSize: '0.8rem' }}>
+                  <div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', fontWeight: 600 }}>Allocated</div>
+                    <div style={{ fontWeight: 700, color: 'var(--purple)' }}>{formatCurrency(totalAllocated)}</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', fontWeight: 600 }}>Unallocated</div>
+                    <div style={{ fontWeight: 700, color: unallocated > 0 ? 'var(--orange)' : 'var(--green)' }}>{formatCurrency(unallocated)}</div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Set category budgets to see allocation.</p>
+            )
+          })()}
         </div>
       </div>
 
@@ -113,7 +138,7 @@ export default function Categories() {
                     <span className="table-name">{cat.name}</span>
                   </div>
                 </td>
-                <td style={{ textAlign: 'right' }}>
+                <td style={{ textAlign: 'right' }} onClick={(e) => e.stopPropagation()}>
                   {editBudget !== null && editBudget.id === cat.id ? (
                     <form onSubmit={(e) => { e.preventDefault(); handleBudgetSave(cat) }} style={{ display: 'inline-flex', gap: '0.3rem' }}>
                       <input type="number" style={{ width: 80, padding: '0.3rem 0.5rem', borderRadius: 6, border: '1px solid var(--border)', fontSize: '0.8rem', background: 'var(--bg)', color: 'var(--text)' }} value={editBudget.value} onChange={(e) => setEditBudget({ ...editBudget, value: e.target.value })} autoFocus />
@@ -125,7 +150,7 @@ export default function Categories() {
                     </button>
                   )}
                 </td>
-                <td><button className="del-btn always" onClick={() => dispatch({ type: 'DELETE_CATEGORY', payload: cat.id })}>✕</button></td>
+                <td onClick={(e) => e.stopPropagation()}><button className="del-btn always" onClick={() => dispatch({ type: 'DELETE_CATEGORY', payload: cat.id })}>✕</button></td>
               </tr>
             ))}
           </tbody>
