@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext'
 import { createCategory } from '../utils/models'
 import { formatCurrency, getCurrentMonth } from '../utils/helpers'
@@ -8,6 +9,7 @@ const COLORS = ['#7b61ff', '#5b8def', '#2d9f5f', '#d94452', '#e5a52e', '#00b8d9'
 
 export default function Categories() {
   const { state, dispatch } = useAppContext()
+  const navigate = useNavigate()
   const [showForm, setShowForm] = useState(false)
   const [showBudgetModal, setShowBudgetModal] = useState(false)
   const [budgetValue, setBudgetValue] = useState('')
@@ -104,7 +106,7 @@ export default function Categories() {
               <tr><td colSpan="3" style={{ color: 'var(--text-muted)', padding: '2rem', textAlign: 'center' }}>No categories yet.</td></tr>
             )}
             {state.categories.map((cat) => (
-              <tr key={cat.id}>
+              <tr key={cat.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/categories/${cat.id}`)}>
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                     <div style={{ width: 4, height: 28, borderRadius: 2, background: cat.color }} />

@@ -35,7 +35,7 @@ export default function Dashboard() {
 
   return (
     <div>
-      <MonthPicker month={month} setMonth={setMonth} />
+      <MonthPicker month={month} setMonth={setMonth} transactions={monthTx} />
 
       <div className="grid-2">
         <div className="card">
@@ -61,7 +61,7 @@ export default function Dashboard() {
               <div className="budget-row-color" style={{ background: c.color }} />
               <div className="budget-row-info">
                 <div className="name">{c.name}</div>
-                <div className="spent">-{formatCurrency(c.spent)} spent</div>
+                <div className="spent">{formatCurrency(c.spent)} spent</div>
               </div>
               <div className="budget-row-right">
                 <div className="amount">{formatCurrency(c.budget - c.spent)} ({c.percent.toFixed(1)}%)</div>
@@ -76,7 +76,7 @@ export default function Dashboard() {
             <h3>Spending this month</h3>
           </div>
           <div className="summary-stat" style={{ marginBottom: '1rem' }}>
-            <div className="value" style={{ color: 'var(--orange)' }}>{formatCurrency(expenses)}</div>
+            <div className="value" style={{ color: 'var(--red)' }}>{formatCurrency(expenses)}</div>
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={chartData}>
@@ -113,6 +113,8 @@ export default function Dashboard() {
                   <div className="name">{t.note || cat?.name || 'Transaction'}</div>
                 </div>
                 {cat && <span className="tx-badge">{cat.name}</span>}
+                {!cat && t.type === 'income' && <span className="tx-badge">Income</span>}
+                {!cat && t.type === 'expense' && <span className="tx-badge">Uncategorized</span>}
                 <div className="tx-right">
                   <div className={`amount ${t.type}`}>{t.type === 'income' ? '+' : '–'}{formatCurrency(t.amount)}</div>
                   <div className="date">{t.date.slice(5)}</div>

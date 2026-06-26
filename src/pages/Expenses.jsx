@@ -13,15 +13,18 @@ export default function Expenses() {
   const { state, dispatch } = useAppContext()
   const [showForm, setShowForm] = useState(false)
   const [month, setMonth] = useState(getCurrentMonth())
+  const [selectedDate, setSelectedDate] = useState(null)
   const [sortKey, setSortKey] = useState('date')
   const [sortDir, setSortDir] = useState('desc')
   const [form, setForm] = useState({ amount: '', categoryId: '', date: new Date().toISOString().slice(0, 10), note: '' })
+  const [groupByCategory, setGroupByCategory] = useState(false)
 
   const getCat = (id) => state.categories.find((c) => c.id === id)
   const catEmojis = { 'Food & Dining': '🛒', 'Transport': '🚗', 'Entertainment': '🎬', 'Utilities': '🏠', 'Shopping': '🛍️', 'Health': '💊' }
 
   const expenses = state.transactions
     .filter((t) => t.type === 'expense' && t.date.startsWith(month))
+    .filter((t) => !selectedDate || t.date === selectedDate)
     .sort((a, b) => {
       let av, bv
       if (sortKey === 'date') { av = a.date; bv = b.date }
@@ -59,15 +62,69 @@ export default function Expenses() {
         <button className="btn btn-primary" onClick={() => setShowForm(true)}>+ Add Expense</button>
       </div>
 
-      <MonthPicker month={month} setMonth={setMonth} />
+      <MonthPicker month={month} setMonth={(m) => { setMonth(m); setSelectedDate(null) }} transactions={state.transactions.filter(t => t.type === 'expense' && t.date.startsWith(month))} onDateSelect={setSelectedDate} />
 
       <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <div className="summary-stat">
-          <div className="label">Total for {getMonthLabel(month)}</div>
-          <div className="value" style={{ color: 'var(--red)' }}>{formatCurrency(total)}</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="summary-stat">
+            <div className="label">{selectedDate ? `Total for ${formatDate(selectedDate)}` : `Total for ${getMonthLabel(month)}`}</div>
+            <div className="value" style={{ color: 'var(--red)' }}>{formatCurrency(total)}</div>
+          </div>
+          <button className="btn btn-outline" onClick={() => setGroupByCategory(!groupByCategory)}>
+            {groupByCategory ? 'Show all' : 'Group by category'}
+          </button>
         </div>
       </div>
 
+      {groupByCategory ? (
+        <div>
+          {state.categories.map((cat) => {
+            const catTx = expenses.filter((t) => t.categoryId === cat.id)
+            if (catTx.length === 0) return null
+            const catTotal = catTx.reduce((s, t) => s + t.amount, 0)
+            return (
+              <div className="card" key={cat.id} style={{ marginBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ width: 4, height: 24, borderRadius: 2, background: cat.color }} />
+                    <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{cat.name}</span>
+                  </div>
+                  <span className="table-amount expense">{formatCurrency(catTotal)}</span>
+                </div>
+                <table className="data-table">
+                  <tbody>
+                    {catTx.map((t) => (
+                      <tr key={t.id}>
+                        <td><span className="table-name">{t.note || 'Expense'}</span></td>
+                        <td className="table-muted">{formatDate(t.date)}</td>
+                        <td style={{ textAlign: 'right' }}><span className="table-amount expense">–{formatCurrency(t.amount)}</span></td>
+                        <td><button className="del-btn always" onClick={() => dispatch({ type: 'DELETE_TRANSACTION', payload: t.id })}>✕</button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          })}
+          {expenses.filter((t) => !state.categories.find((c) => c.id === t.categoryId)).length > 0 && (
+            <div className="card" style={{ marginBottom: '0.75rem' }}>
+              <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Uncategorized</span>
+              <table className="data-table">
+                <tbody>
+                  {expenses.filter((t) => !state.categories.find((c) => c.id === t.categoryId)).map((t) => (
+                    <tr key={t.id}>
+                      <td><span className="table-name">{t.note || 'Expense'}</span></td>
+                      <td className="table-muted">{formatDate(t.date)}</td>
+                      <td style={{ textAlign: 'right' }}><span className="table-amount expense">–{formatCurrency(t.amount)}</span></td>
+                      <td><button className="del-btn always" onClick={() => dispatch({ type: 'DELETE_TRANSACTION', payload: t.id })}>✕</button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      ) : (
       <div className="card">
         <table className="data-table">
           <thead>
@@ -103,6 +160,7 @@ export default function Expenses() {
           </tbody>
         </table>
       </div>
+      )}
 
       {showForm && (
         <div className="modal-overlay" onClick={() => setShowForm(false)}>

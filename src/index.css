@@ -89,8 +89,8 @@ a { color: inherit; text-decoration: none; }
 
 .main-content {
   padding: 1.5rem 2rem;
-  max-width: 1100px;
   overflow-y: auto;
+  min-width: 0;
 }
 
 /* Cards */
@@ -127,12 +127,18 @@ a { color: inherit; text-decoration: none; }
   display: flex;
   height: 14px;
   border-radius: 7px;
-  overflow: hidden;
+  overflow: visible;
   margin-bottom: 1.5rem;
+  position: relative;
 }
 .allocation-segment {
   transition: width 0.3s ease;
+  position: relative;
+  border-radius: 0;
 }
+.allocation-segment:first-child { border-radius: 7px 0 0 7px; }
+.allocation-segment:last-child { border-radius: 0 7px 7px 0; }
+.allocation-segment:only-child { border-radius: 7px; }
 
 /* Budget Category Rows */
 .budget-row {
@@ -165,7 +171,7 @@ a { color: inherit; text-decoration: none; }
 }
 .budget-row-info { flex: 1; }
 .budget-row-info .name { font-weight: 600; font-size: 0.85rem; }
-.budget-row-info .spent { font-size: 0.75rem; color: var(--green); }
+.budget-row-info .spent { font-size: 0.75rem; color: var(--red); }
 .budget-row-right { text-align: right; }
 .budget-row-right .amount { font-weight: 700; font-size: 0.85rem; color: var(--green); }
 .budget-row-right .budget-label { font-size: 0.72rem; color: var(--text-muted); }
@@ -224,7 +230,9 @@ a { color: inherit; text-decoration: none; }
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
   margin-bottom: 1.5rem;
+  min-width: 0;
 }
+.grid-2 > * { min-width: 0; overflow: hidden; }
 
 /* Transaction Rows */
 .tx-row {
@@ -515,24 +523,64 @@ a { color: inherit; text-decoration: none; }
 .allocation-segment:hover .alloc-tooltip { opacity: 1; }
 .allocation-segment:hover { opacity: 0.8; }
 
-/* Month Picker */
-.month-picker {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+/* Calendar Picker */
+.cal-wrapper {
   margin-bottom: 1.5rem;
 }
-.month-select {
-  padding: 0.45rem 0.75rem;
+.cal-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
+  padding: 0.5rem 0.85rem;
+  cursor: pointer;
+  font-family: var(--font);
   font-size: 0.85rem;
   font-weight: 600;
-  font-family: var(--font);
-  background: var(--bg-card);
   color: var(--text);
-  outline: none;
-  cursor: pointer;
-  min-width: 160px;
+  transition: border-color 0.15s;
 }
-.month-select:focus { border-color: var(--purple); }
+.cal-toggle:hover { border-color: var(--purple); }
+.cal-toggle-icon { font-size: 0.9rem; }
+.cal-toggle-label { }
+.cal-chevron { transition: transform 0.2s; color: var(--text-muted); flex-shrink: 0; }
+.cal-clear {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--purple);
+  background: var(--purple-light);
+  border: none;
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+  cursor: pointer;
+  font-family: var(--font);
+}
+.cal-clear:hover { opacity: 0.7; }
+.cal-body {
+  margin-top: 0.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  width: fit-content;
+}
+.cal-body .rdp-root {
+  --rdp-accent-color: var(--purple);
+  --rdp-accent-background-color: var(--purple-light);
+  font-family: var(--font);
+  font-size: 0.8rem;
+}
+.cal-body .rdp-day--has-tx::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--orange);
+}
+.cal-body .rdp-day { position: relative; }

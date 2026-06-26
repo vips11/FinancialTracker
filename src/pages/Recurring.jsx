@@ -8,6 +8,7 @@ export default function Recurring() {
   const [showForm, setShowForm] = useState(false)
   const [sortKey, setSortKey] = useState('name')
   const [sortDir, setSortDir] = useState('asc')
+  const [groupByCategory, setGroupByCategory] = useState(false)
   const [form, setForm] = useState({ name: '', amount: '', frequency: 'monthly', categoryId: '' })
 
   const getCat = (id) => state.categories.find((c) => c.id === id)
@@ -53,12 +54,66 @@ export default function Recurring() {
       </div>
 
       <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <div className="summary-stat">
-          <div className="label">Estimated Monthly Total</div>
-          <div className="value" style={{ color: 'var(--red)' }}>{formatCurrency(monthlyTotal)}</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="summary-stat">
+            <div className="label">Estimated Monthly Total</div>
+            <div className="value" style={{ color: 'var(--red)' }}>{formatCurrency(monthlyTotal)}</div>
+          </div>
+          <button className="btn btn-outline" onClick={() => setGroupByCategory(!groupByCategory)}>
+            {groupByCategory ? 'Show all' : 'Group by category'}
+          </button>
         </div>
       </div>
 
+      {groupByCategory ? (
+        <div>
+          {state.categories.map((cat) => {
+            const catItems = sorted.filter((r) => r.categoryId === cat.id)
+            if (catItems.length === 0) return null
+            const catTotal = catItems.reduce((s, r) => s + r.amount, 0)
+            return (
+              <div className="card" key={cat.id} style={{ marginBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ width: 4, height: 24, borderRadius: 2, background: cat.color }} />
+                    <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{cat.name}</span>
+                  </div>
+                  <span className="table-amount expense">{formatCurrency(catTotal)}/mo</span>
+                </div>
+                <table className="data-table">
+                  <tbody>
+                    {catItems.map((r) => (
+                      <tr key={r.id}>
+                        <td><span className="table-name">{r.name}</span></td>
+                        <td><span className="tx-badge">{r.frequency.charAt(0).toUpperCase() + r.frequency.slice(1)}</span></td>
+                        <td style={{ textAlign: 'right' }}><span className="table-amount expense">{formatCurrency(r.amount)}</span></td>
+                        <td><button className="del-btn always" onClick={() => dispatch({ type: 'DELETE_RECURRING', payload: r.id })}>✕</button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          })}
+          {sorted.filter((r) => !state.categories.find((c) => c.id === r.categoryId)).length > 0 && (
+            <div className="card" style={{ marginBottom: '0.75rem' }}>
+              <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Uncategorized</span>
+              <table className="data-table">
+                <tbody>
+                  {sorted.filter((r) => !state.categories.find((c) => c.id === r.categoryId)).map((r) => (
+                    <tr key={r.id}>
+                      <td><span className="table-name">{r.name}</span></td>
+                      <td><span className="tx-badge">{r.frequency.charAt(0).toUpperCase() + r.frequency.slice(1)}</span></td>
+                      <td style={{ textAlign: 'right' }}><span className="table-amount expense">{formatCurrency(r.amount)}</span></td>
+                      <td><button className="del-btn always" onClick={() => dispatch({ type: 'DELETE_RECURRING', payload: r.id })}>✕</button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      ) : (
       <div className="card">
         <table className="data-table">
           <thead>
@@ -94,6 +149,7 @@ export default function Recurring() {
           </tbody>
         </table>
       </div>
+      )}
 
       {showForm && (
         <div className="modal-overlay" onClick={() => setShowForm(false)}>

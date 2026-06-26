@@ -13,12 +13,14 @@ export default function Income() {
   const { state, dispatch } = useAppContext()
   const [showForm, setShowForm] = useState(false)
   const [month, setMonth] = useState(getCurrentMonth())
+  const [selectedDate, setSelectedDate] = useState(null)
   const [sortKey, setSortKey] = useState('date')
   const [sortDir, setSortDir] = useState('desc')
   const [form, setForm] = useState({ amount: '', source: '', date: new Date().toISOString().slice(0, 10) })
 
   const incomes = state.transactions
     .filter((t) => t.type === 'income' && t.date.startsWith(month))
+    .filter((t) => !selectedDate || t.date === selectedDate)
     .sort((a, b) => {
       let av, bv
       if (sortKey === 'date') { av = a.date; bv = b.date }
@@ -55,11 +57,11 @@ export default function Income() {
         <button className="btn btn-primary" onClick={() => setShowForm(true)}>+ Add Income</button>
       </div>
 
-      <MonthPicker month={month} setMonth={setMonth} />
+      <MonthPicker month={month} setMonth={(m) => { setMonth(m); setSelectedDate(null) }} transactions={state.transactions.filter(t => t.type === 'income' && t.date.startsWith(month))} onDateSelect={setSelectedDate} />
 
       <div className="card" style={{ marginBottom: '1.5rem' }}>
         <div className="summary-stat">
-          <div className="label">Total for {getMonthLabel(month)}</div>
+          <div className="label">{selectedDate ? `Total for ${formatDate(selectedDate)}` : `Total for ${getMonthLabel(month)}`}</div>
           <div className="value" style={{ color: 'var(--green)' }}>{formatCurrency(total)}</div>
         </div>
       </div>
