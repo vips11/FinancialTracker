@@ -71,13 +71,13 @@ export default function CategoryDetail() {
       <MonthPicker month={month} setMonth={(m) => { setMonth(m); setSelectedDate(null) }} transactions={monthTx} onDateSelect={setSelectedDate} />
 
       <div className="summary-grid">
-        <div className="summary-card expenses">
-          <div className="label">Spent</div>
-          <div className="value">{formatCurrency(spent)}</div>
-        </div>
         <div className="summary-card budget">
           <div className="label">Budget</div>
           <div className="value">{category.budget ? formatCurrency(category.budget) : '—'}</div>
+        </div>
+        <div className="summary-card expenses">
+          <div className="label">Spent</div>
+          <div className="value">{formatCurrency(spent)}</div>
         </div>
         <div className="summary-card balance">
           <div className="label">Remaining</div>

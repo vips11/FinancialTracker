@@ -18,7 +18,7 @@ export default function Sidebar() {
       <aside className={`sidebar ${open ? 'open' : ''}`}>
       <div className="sidebar-logo">FinTrack</div>
       <nav className="sidebar-nav">
-        <NavLink to="/" onClick={() => setOpen(false)} className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+        <NavLink to="/dashboard" onClick={() => setOpen(false)} className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
           <span>Overview</span>
         </NavLink>

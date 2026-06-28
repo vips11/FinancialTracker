@@ -1,6 +1,6 @@
-import { HashRouter, Routes, Route } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AppProvider } from './context/AppContext'
-import { AuthProvider, useAuth } from './context/AuthContext'
+import { AuthProvider } from './context/AuthContext'
 import { AlertProvider } from './components/AlertDialog'
 import Sidebar from './components/Sidebar'
 import Dashboard from './pages/Dashboard'
@@ -10,6 +10,14 @@ import Recurring from './pages/Recurring'
 import Categories from './pages/Categories'
 import CategoryDetail from './pages/CategoryDetail'
 import Login from './pages/Login'
+import Landing from './pages/Landing'
+import { seedDemoData } from './utils/demoData'
+
+// Seed demo data for first-time guests
+if (!localStorage.getItem('ft_transactions') && !localStorage.getItem('ft_seeded')) {
+  seedDemoData()
+  localStorage.setItem('ft_seeded', '1')
+}
 
 function Layout() {
   return (
@@ -17,12 +25,13 @@ function Layout() {
       <Sidebar />
       <main className="main-content">
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/income" element={<Income />} />
           <Route path="/expenses" element={<Expenses />} />
           <Route path="/recurring" element={<Recurring />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/categories/:id" element={<CategoryDetail />} />
+          <Route path="/login" element={<Login />} />
         </Routes>
       </main>
     </div>
@@ -35,7 +44,10 @@ export default function App() {
       <AlertProvider>
         <AppProvider>
           <HashRouter>
-            <Layout />
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/*" element={<Layout />} />
+            </Routes>
           </HashRouter>
         </AppProvider>
       </AlertProvider>

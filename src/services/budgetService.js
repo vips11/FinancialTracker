@@ -1,9 +1,10 @@
 // Budget threshold checks — notification-ready
 export function getBudgetStatus(spent, budget) {
   if (!budget || budget <= 0) return { percent: 0, status: 'none' }
-  const percent = Math.min((spent / budget) * 100, 100)
+  const percent = (spent / budget) * 100
   let status = 'safe' // green
-  if (percent >= 90) status = 'critical' // red
+  if (percent > 100) status = 'over' // red — over budget
+  else if (percent >= 90) status = 'critical' // red
   else if (percent >= 75) status = 'warning' // yellow
   return { percent, status }
 }
@@ -27,8 +28,9 @@ export function getOverallBudgetForMonth(month, monthlyBudgets, settings) {
 export function getCategoryBudgetStatuses(transactions, categories, month, monthlyBudgets = {}) {
   return categories.map((cat) => {
     const budget = getCategoryBudgetForMonth(cat, month, monthlyBudgets)
+    const catId = cat._id || cat.id
     const spent = transactions
-      .filter((t) => t.type === 'expense' && t.categoryId === cat.id && t.date.startsWith(month))
+      .filter((t) => t.type === 'expense' && (t.categoryId === catId || t.categoryId === cat.id || t.categoryId === cat._id) && t.date.startsWith(month))
       .reduce((sum, t) => sum + t.amount, 0)
     return { ...cat, spent, budget, ...getBudgetStatus(spent, budget) }
   })

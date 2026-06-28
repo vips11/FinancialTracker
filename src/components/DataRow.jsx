@@ -30,7 +30,7 @@ export const txColumns = (getCat) => [
   { field: 'category', render: (t) => getCat?.(t.categoryId)?.name || '—' },
   { field: 'amount', style: { textAlign: 'right' }, render: (t) => (
     <span style={{ color: t.type === 'income' ? 'var(--green)' : 'var(--red)' }}>
-      {t.type === 'income' ? '+' : ''}{formatCurrency(t.amount)}
+      {formatCurrency(t.amount)}
     </span>
   )},
 ]

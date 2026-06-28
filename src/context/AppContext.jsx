@@ -1,6 +1,7 @@
-import { createContext, useContext, useReducer, useEffect, useCallback } from 'react'
+import { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react'
 import { api } from '../services/api'
 import { useAuth } from './AuthContext'
+import { processRecurring } from '../utils/recurringProcessor'
 
 const AppContext = createContext()
 
@@ -162,6 +163,15 @@ export function AppProvider({ children }) {
       localStorage.setItem('ft_monthly_budgets', JSON.stringify(state.monthlyBudgets))
     }
   }, [state.transactions, state.categories, state.recurring, state.settings, state.monthlyBudgets, state.loaded, user])
+
+  // Process recurring items — auto-generate monthly transactions
+  const processedRef = useRef(false)
+  useEffect(() => {
+    if (!state.loaded || processedRef.current) return
+    processedRef.current = true
+    const newTx = processRecurring(state.recurring, state.transactions)
+    newTx.forEach((tx) => dispatch({ type: 'ADD_TRANSACTION', payload: tx }))
+  }, [state.loaded])
 
   // Apply theme
   useEffect(() => {

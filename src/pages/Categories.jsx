@@ -113,7 +113,7 @@ export default function Categories() {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', fontWeight: 600 }}>Unallocated</div>
-                    <div style={{ fontWeight: 700, color: unallocated > 0 ? 'var(--orange)' : 'var(--green)' }}>{formatCurrency(unallocated)}</div>
+                    <div style={{ fontWeight: 700, color: 'var(--text-muted)' }}>{formatCurrency(unallocated)}</div>
                   </div>
                 </div>
               </>

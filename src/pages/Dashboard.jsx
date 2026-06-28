@@ -7,6 +7,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } f
 import MonthPicker from '../components/MonthPicker'
 import PlaidLinkButton, { LinkedAccounts } from '../components/PlaidLinkButton'
 import SyncButton from '../components/SyncButton'
+import EmptyState from '../components/EmptyState'
 
 export default function Dashboard() {
   const { state } = useAppContext()
@@ -24,10 +25,14 @@ export default function Dashboard() {
   const chartData = Array.from({ length: 6 }, (_, i) => {
     const m = shiftMonth(month, i - 5)
     const txs = state.transactions.filter((t) => t.date.startsWith(m))
+    const inc = txs.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+    const exp = txs.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
     return {
       month: monthNames[Number(m.slice(5)) - 1],
-      'This month': txs.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0),
-      'Last month': txs.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0),
+      'This month': exp,
+      'Last month': inc,
+      Income: inc,
+      Expenses: exp,
     }
   })
 
@@ -44,6 +49,13 @@ export default function Dashboard() {
 
       <LinkedAccounts />
 
+      {state.transactions.length === 0 && state.categories.length === 0 && (
+        <div className="card">
+          <EmptyState icon="📊" title="Welcome to FinTrack!" message="Start by adding your first expense or connecting your bank." action="Add Expense" onAction={() => navigate('/expenses')} />
+        </div>
+      )}
+
+      {(state.transactions.length > 0 || state.categories.length > 0) && <>
       <div className="grid-2">
         <div className="card">
           <div className="card-header">
@@ -62,7 +74,10 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {categoryStatuses.filter(c => c.budget > 0).map((c) => (
+          {categoryStatuses.filter(c => c.budget > 0 || c.spent > 0).map((c) => {
+            const remaining = c.budget - c.spent
+            const overBudget = remaining < 0
+            return (
             <div className="budget-row" key={c._id || c.id} onClick={() => navigate(`/categories/${c.id}`)}>
               <div className="budget-row-icon">{catEmojis[c.name] || '📂'}</div>
               <div className="budget-row-color" style={{ background: c.color }} />
@@ -71,11 +86,12 @@ export default function Dashboard() {
                 <div className="spent">{formatCurrency(c.spent)} spent</div>
               </div>
               <div className="budget-row-right">
-                <div className="amount">{formatCurrency(c.budget - c.spent)} ({c.percent.toFixed(1)}%)</div>
+                <div className="amount" style={{ color: overBudget ? 'var(--red)' : undefined }}>{overBudget ? '–' : ''}{formatCurrency(Math.abs(remaining))} ({c.percent.toFixed(0)}%)</div>
                 <div className="budget-label">Budget {formatCurrency(c.budget)}</div>
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
 
         <div className="card">
@@ -104,6 +120,20 @@ export default function Dashboard() {
         </div>
       </div>
 
+      <div className="card">
+        <div className="card-header"><h3>Income vs Expenses</h3></div>
+        <ResponsiveContainer width="100%" height={220}>
+          <AreaChart data={chartData}>
+            <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={11} tick={{ fill: '#888' }} />
+            <YAxis tickLine={false} axisLine={false} fontSize={11} tick={{ fill: '#888' }} tickFormatter={(v) => `$${v}`} />
+            <Tooltip formatter={(v) => formatCurrency(v)} />
+            <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '0.72rem' }} />
+            <Area type="linear" dataKey="Income" stroke="var(--green)" strokeWidth={2} fill="none" dot={{ r: 3 }} />
+            <Area type="linear" dataKey="Expenses" stroke="var(--red)" strokeWidth={2} fill="none" dot={{ r: 3 }} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
       <div className="grid-2">
         <div className="card">
           <div className="card-header">
@@ -123,7 +153,7 @@ export default function Dashboard() {
                 {!cat && t.type === 'income' && <span className="tx-badge">Income</span>}
                 {!cat && t.type === 'expense' && <span className="tx-badge">Uncategorized</span>}
                 <div className="tx-right">
-                  <div className={`amount ${t.type}`}>{t.type === 'income' ? '+' : '–'}{formatCurrency(t.amount)}</div>
+                  <div className={`amount ${t.type}`}>{t.type === 'expense' ? '–' : ''}{formatCurrency(t.amount)}</div>
                   <div className="date">{t.date.slice(5)}</div>
                 </div>
               </div>
@@ -153,6 +183,7 @@ export default function Dashboard() {
           })}
         </div>
       </div>
+      </>}
     </div>
   )
 }
