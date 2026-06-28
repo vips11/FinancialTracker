@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react'
 import { api } from '../services/api'
 import { useAppContext } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
 
 export function LinkedAccounts() {
+  const { user } = useAuth()
   const [accounts, setAccounts] = useState([])
 
   useEffect(() => {
+    if (!user) return
     api.raw('/plaid/accounts').then((data) => {
       if (Array.isArray(data)) setAccounts(data)
     })
@@ -27,9 +30,12 @@ export function LinkedAccounts() {
 }
 
 export default function PlaidLinkButton() {
+  const { user } = useAuth()
   const [syncing, setSyncing] = useState(false)
   const [connecting, setConnecting] = useState(false)
   const { dispatch } = useAppContext()
+
+  if (!user) return null
 
   const reloadTransactions = async () => {
     const transactions = await api.getTransactions()

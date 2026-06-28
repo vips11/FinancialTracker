@@ -5,6 +5,7 @@ import { useAppContext } from '../context/AppContext'
 import { createTransaction } from '../utils/models'
 import { formatCurrency, getCurrentMonth, getMonthLabel } from '../utils/helpers'
 import MonthPicker from '../components/MonthPicker'
+import FormField, { useFormValidation } from '../components/FormField'
 
 function formatDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00')
@@ -47,14 +48,20 @@ export default function Expenses() {
   }
   const sortIcon = (key) => sortKey === key ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''
 
+  const { errors, validate, clearErrors } = useFormValidation({
+    amount: { required: true, message: 'Amount is required' },
+    note: { required: true, message: 'Description is required' },
+  })
+
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!form.amount || !form.categoryId) return
+    if (!validate(form)) return
+    const categoryId = form.categoryId || 'uncategorized'
     if (editingTx) {
-      dispatch({ type: 'UPDATE_TRANSACTION', payload: { _id: editingTx._id || editingTx.id, id: editingTx.id, amount: Number(form.amount), categoryId: form.categoryId, date: form.date, note: form.note } })
+      dispatch({ type: 'UPDATE_TRANSACTION', payload: { _id: editingTx._id || editingTx.id, id: editingTx.id, amount: Number(form.amount), categoryId, date: form.date, note: form.note } })
       setEditingTx(null)
     } else {
-      dispatch({ type: 'ADD_TRANSACTION', payload: createTransaction({ amount: form.amount, type: 'expense', categoryId: form.categoryId, date: form.date, note: form.note }) })
+      dispatch({ type: 'ADD_TRANSACTION', payload: createTransaction({ amount: form.amount, type: 'expense', categoryId, date: form.date, note: form.note }) })
     }
     setForm({ amount: '', categoryId: '', date: new Date().toISOString().slice(0, 10), note: '' })
     setShowForm(false)
@@ -167,27 +174,23 @@ export default function Expenses() {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>{editingTx ? 'Edit Expense' : 'Add Expense'}</h3>
             <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label>Name</label>
+              <FormField label="Name" error={errors.note}>
                 <input type="text" placeholder="e.g. Lunch at cafe" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} autoFocus />
-              </div>
+              </FormField>
               <div className="form-row">
-                <div className="form-group">
-                  <label>Amount</label>
-                  <input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} required />
-                </div>
-                <div className="form-group">
-                  <label>Category</label>
-                  <select value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })} required>
+                <FormField label="Amount" error={errors.amount}>
+                  <input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+                </FormField>
+                <FormField label="Category">
+                  <select value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}>
                     <option value="">Select</option>
                     {state.categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
-                </div>
+                </FormField>
               </div>
-              <div className="form-group">
-                <label>Date</label>
-                <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
-              </div>
+              <FormField label="Date">
+                <input type="date" value={form.date} max={new Date().toISOString().slice(0, 10)} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+              </FormField>
               <div className="modal-actions">
                 <button type="button" className="btn btn-outline" onClick={() => setShowForm(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary">Add</button>

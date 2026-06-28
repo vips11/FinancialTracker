@@ -11,10 +11,6 @@ import CategoryDetail from './pages/CategoryDetail'
 import Login from './pages/Login'
 
 function Layout() {
-  const { user } = useAuth()
-
-  if (!user) return <Login />
-
   return (
     <div className="app-layout">
       <Sidebar />

@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { api } from '../services/api'
 import { useAppContext } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
 
 export default function SyncButton() {
+  const { user } = useAuth()
+  if (!user) return null
   const [syncing, setSyncing] = useState(false)
   const { dispatch } = useAppContext()
 

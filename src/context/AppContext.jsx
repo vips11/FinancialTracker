@@ -17,6 +17,8 @@ function reducer(state, action) {
   switch (action.type) {
     case 'SET_DATA':
       return { ...state, ...action.payload, loaded: true }
+    case 'RESET':
+      return { ...INITIAL_STATE }
     case 'ADD_TRANSACTION':
       return { ...state, transactions: [...state.transactions, action.payload] }
     case 'DELETE_TRANSACTION':
@@ -59,28 +61,48 @@ export function AppProvider({ children }) {
   const [state, rawDispatch] = useReducer(reducer, INITIAL_STATE)
   const { user } = useAuth()
 
-  // Load data from API on login
+  // Load data from API (logged in) or localStorage (guest)
   useEffect(() => {
-    if (!user) return
-    Promise.all([api.getTransactions(), api.getCategories(), api.getRecurring(), api.getSettings()])
-      .then(([transactions, categories, recurring, settings]) => {
-        rawDispatch({ type: 'SET_DATA', payload: {
-          transactions: Array.isArray(transactions) ? transactions : [],
-          categories: Array.isArray(categories) ? categories : [],
-          recurring: Array.isArray(recurring) ? recurring : [],
-          settings: settings && !settings.error ? settings : { monthlyBudget: 0, theme: 'light' },
-          monthlyBudgets: settings?.monthlyBudgets || {},
-        }})
-      })
-      .catch((err) => {
-        console.error('Failed to load data:', err)
-        rawDispatch({ type: 'SET_DATA', payload: { ...INITIAL_STATE, loaded: true } })
-      })
+    rawDispatch({ type: 'RESET' })
+    if (user) {
+      Promise.all([api.getTransactions(), api.getCategories(), api.getRecurring(), api.getSettings()])
+        .then(([transactions, categories, recurring, settings]) => {
+          rawDispatch({ type: 'SET_DATA', payload: {
+            transactions: Array.isArray(transactions) ? transactions : [],
+            categories: Array.isArray(categories) ? categories : [],
+            recurring: Array.isArray(recurring) ? recurring : [],
+            settings: settings && !settings.error ? settings : { monthlyBudget: 0, theme: 'light' },
+            monthlyBudgets: settings?.monthlyBudgets || {},
+          }})
+        })
+        .catch((err) => {
+          console.error('Failed to load data:', err)
+          rawDispatch({ type: 'SET_DATA', payload: { ...INITIAL_STATE, loaded: true } })
+        })
+    } else {
+      // Guest mode — use localStorage
+      const get = (k) => JSON.parse(localStorage.getItem(k) || 'null')
+      rawDispatch({ type: 'SET_DATA', payload: {
+        transactions: get('ft_transactions') || [],
+        categories: get('ft_categories') || [],
+        recurring: get('ft_recurring') || [],
+        settings: get('ft_settings') || { monthlyBudget: 0, theme: 'light' },
+        monthlyBudgets: get('ft_monthly_budgets') || {},
+      }})
+    }
   }, [user])
 
-  // Dispatch wrapper that syncs to API
+  // Dispatch wrapper that syncs to API or localStorage
   const dispatch = useCallback((action) => {
     rawDispatch(action)
+    if (!user) {
+      // Guest mode — save to localStorage after state update
+      setTimeout(() => {
+        const el = document.getElementById('root')
+        // We'll handle localStorage persistence in a useEffect below
+      }, 0)
+      return
+    }
     switch (action.type) {
       case 'ADD_TRANSACTION':
         api.addTransaction(action.payload).then((t) => { if (t?._id) rawDispatch({ type: 'UPDATE_TRANSACTION', payload: t }) })
@@ -122,18 +144,31 @@ export function AppProvider({ children }) {
     }
   }, [])
 
-  // Settings sync helper
+  // Settings sync for logged-in users
   useEffect(() => {
-    if (!state.loaded) return
+    if (!state.loaded || !user) return
     api.updateSettings({ monthlyBudget: state.settings.monthlyBudget, theme: state.settings.theme, monthlyBudgets: state.monthlyBudgets })
   }, [state.settings.monthlyBudget, state.settings.theme, state.monthlyBudgets, state.loaded])
+
+  // localStorage persistence for guest mode only
+  useEffect(() => {
+    if (!state.loaded || user) return
+    // Only save if there's actual data (don't overwrite with empty on logout)
+    if (state.transactions.length || state.categories.length || state.recurring.length) {
+      localStorage.setItem('ft_transactions', JSON.stringify(state.transactions))
+      localStorage.setItem('ft_categories', JSON.stringify(state.categories))
+      localStorage.setItem('ft_recurring', JSON.stringify(state.recurring))
+      localStorage.setItem('ft_settings', JSON.stringify(state.settings))
+      localStorage.setItem('ft_monthly_budgets', JSON.stringify(state.monthlyBudgets))
+    }
+  }, [state.transactions, state.categories, state.recurring, state.settings, state.monthlyBudgets, state.loaded, user])
 
   // Apply theme
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', state.settings.theme)
   }, [state.settings.theme])
 
-  if (!state.loaded && user) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>
+  if (!state.loaded) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>
 
   return (
     <AppContext.Provider value={{ state, dispatch }}>

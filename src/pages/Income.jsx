@@ -1,5 +1,6 @@
 import SyncButton from '../components/SyncButton'
 import DataRow, { incomeColumns } from '../components/DataRow'
+import FormField, { useFormValidation } from '../components/FormField'
 import { useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import { createTransaction } from '../utils/models'
@@ -42,9 +43,14 @@ export default function Income() {
   }
   const sortIcon = (key) => sortKey === key ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''
 
+  const { errors, validate, clearErrors } = useFormValidation({
+    amount: { required: true, message: 'Amount is required' },
+    source: { required: true, message: 'Source is required' },
+  })
+
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!form.amount) return
+    if (!validate(form)) return
     if (editingTx) {
       dispatch({ type: 'UPDATE_TRANSACTION', payload: { _id: editingTx._id || editingTx.id, id: editingTx.id, amount: Number(form.amount), date: form.date, note: form.source } })
       setEditingTx(null)
@@ -106,19 +112,16 @@ export default function Income() {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>{editingTx ? 'Edit Income' : 'Add Income'}</h3>
             <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label>Source</label>
+              <FormField label="Source" error={errors.source}>
                 <input type="text" placeholder="e.g. Salary, Freelance" value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} autoFocus />
-              </div>
+              </FormField>
               <div className="form-row">
-                <div className="form-group">
-                  <label>Amount</label>
-                  <input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} required />
-                </div>
-                <div className="form-group">
-                  <label>Date</label>
-                  <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
-                </div>
+                <FormField label="Amount" error={errors.amount}>
+                  <input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+                </FormField>
+                <FormField label="Date">
+                  <input type="date" value={form.date} max={new Date().toISOString().slice(0, 10)} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+                </FormField>
               </div>
               <div className="modal-actions">
                 <button type="button" className="btn btn-outline" onClick={() => setShowForm(false)}>Cancel</button>

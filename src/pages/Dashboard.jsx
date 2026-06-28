@@ -56,14 +56,14 @@ export default function Dashboard() {
           <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Allocation</p>
           <div className="allocation-bar">
             {categoryStatuses.filter(c => c.budget > 0).map((c) => (
-              <div key={c.id} className="allocation-segment" style={{ width: `${(c.budget / totalBudget) * 100}%`, background: c.color }}>
+              <div key={c._id || c.id} className="allocation-segment" style={{ width: `${(c.budget / totalBudget) * 100}%`, background: c.color }}>
                 <span className="alloc-tooltip">{c.name}: {formatCurrency(c.budget)}</span>
               </div>
             ))}
           </div>
 
           {categoryStatuses.filter(c => c.budget > 0).map((c) => (
-            <div className="budget-row" key={c.id} onClick={() => navigate(`/categories/${c.id}`)}>
+            <div className="budget-row" key={c._id || c.id} onClick={() => navigate(`/categories/${c.id}`)}>
               <div className="budget-row-icon">{catEmojis[c.name] || '📂'}</div>
               <div className="budget-row-color" style={{ background: c.color }} />
               <div className="budget-row-info">
@@ -139,7 +139,7 @@ export default function Dashboard() {
           {state.recurring.slice(0, 4).map((r) => {
             const cat = getCat(r.categoryId)
             return (
-              <div className="rec-row" key={r.id}>
+              <div className="rec-row" key={r._id || r.id}>
                 <div className="tx-icon">{catEmojis[cat?.name] || '📅'}</div>
                 <div className="rec-info">
                   <div className="name">{r.name}</div>

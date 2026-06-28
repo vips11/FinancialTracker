@@ -104,6 +104,10 @@ export default function Categories() {
                 </ResponsiveContainer>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.75rem', fontSize: '0.8rem' }}>
                   <div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', fontWeight: 600 }}>Total Budget</div>
+                    <div style={{ fontWeight: 700 }}>{formatCurrency(overallB)}</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
                     <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', fontWeight: 600 }}>Allocated</div>
                     <div style={{ fontWeight: 700, color: 'var(--purple)' }}>{formatCurrency(totalAllocated)}</div>
                   </div>
