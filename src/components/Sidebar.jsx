@@ -46,6 +46,11 @@ export default function Sidebar() {
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.displayName}</span>
           </div>
         )}
+        <select className="theme-toggle" style={{ marginBottom: '0.5rem', cursor: 'pointer' }} value={state.settings.currency || 'USD'} onChange={(e) => dispatch({ type: 'UPDATE_SETTINGS', payload: { currency: e.target.value } })}>
+          <option value="USD">🇺🇸 USD</option>
+          <option value="CAD">🇨🇦 CAD</option>
+          <option value="INR">🇮🇳 INR</option>
+        </select>
         <button className="theme-toggle" onClick={() => dispatch({ type: 'UPDATE_SETTINGS', payload: { theme: theme === 'dark' ? 'light' : 'dark' } })}>
           {theme === 'dark' ? '☀️ Light mode' : '🌙 Dark mode'}
         </button>

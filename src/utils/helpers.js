@@ -1,5 +1,10 @@
+const CURRENCY_LOCALES = { USD: 'en-US', CAD: 'en-CA', INR: 'en-IN' }
+let activeCurrency = localStorage.getItem('ft_currency') || 'USD'
+
+export function setCurrency(c) { activeCurrency = c }
+
 export function formatCurrency(amount) {
-  return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(amount)
+  return new Intl.NumberFormat(CURRENCY_LOCALES[activeCurrency] || 'en-US', { style: 'currency', currency: activeCurrency }).format(amount)
 }
 
 export function getCurrentMonth() {

@@ -2,6 +2,7 @@ import { createContext, useContext, useReducer, useEffect, useCallback, useRef }
 import { api } from '../services/api'
 import { useAuth } from './AuthContext'
 import { processRecurring } from '../utils/recurringProcessor'
+import { setCurrency } from '../utils/helpers'
 
 const AppContext = createContext()
 
@@ -17,6 +18,7 @@ const INITIAL_STATE = {
 function reducer(state, action) {
   switch (action.type) {
     case 'SET_DATA':
+      if (action.payload.settings?.currency) setCurrency(action.payload.settings.currency)
       return { ...state, ...action.payload, loaded: true }
     case 'RESET':
       return { ...INITIAL_STATE }
@@ -38,8 +40,10 @@ function reducer(state, action) {
       return { ...state, recurring: state.recurring.filter((r) => r._id !== action.payload && r.id !== action.payload) }
     case 'UPDATE_RECURRING':
       return { ...state, recurring: state.recurring.map((r) => ((r._id || r.id) === (action.payload._id || action.payload.id) ? { ...r, ...action.payload } : r)) }
-    case 'UPDATE_SETTINGS':
+    case 'UPDATE_SETTINGS': {
+      if (action.payload.currency) setCurrency(action.payload.currency)
       return { ...state, settings: { ...state.settings, ...action.payload } }
+    }
     case 'SET_MONTHLY_BUDGET': {
       const { month, categoryId, budget } = action.payload
       const mb = { ...state.monthlyBudgets }
@@ -177,6 +181,14 @@ export function AppProvider({ children }) {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', state.settings.theme)
   }, [state.settings.theme])
+
+  // Persist currency for formatCurrency helper
+  useEffect(() => {
+    if (state.settings.currency) {
+      localStorage.setItem('ft_currency', state.settings.currency)
+      setCurrency(state.settings.currency)
+    }
+  }, [state.settings.currency])
 
   if (!state.loaded) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading...</div>
 
