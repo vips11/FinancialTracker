@@ -119,7 +119,7 @@ export default function Expenses() {
                         <td><span className="table-name">{t.note || 'Expense'}</span></td>
                         <td className="table-muted">{formatDate(t.date)}</td>
                         <td style={{ textAlign: 'right' }}><span className="table-amount expense">–{formatCurrency(t.amount)}</span></td>
-                        <td style={{ whiteSpace: "nowrap" }}><button className="del-btn always" onClick={() => startEdit(t)}>✎</button><button className="del-btn always" onClick={() => dispatch({ type: "DELETE_TRANSACTION", payload: t._id || t.id })}>✕</button></td>
+                        <td><span style={{ display: "inline-flex", gap: "0.25rem" }}><button className="del-btn always" onClick={() => startEdit(t)}>✎</button><button className="del-btn always" onClick={() => dispatch({ type: "DELETE_TRANSACTION", payload: t._id || t.id })}>✕</button></span></td>
                       </tr>
                     ))}
                   </tbody>
@@ -137,7 +137,7 @@ export default function Expenses() {
                       <td><span className="table-name">{t.note || 'Expense'}</span></td>
                       <td className="table-muted">{formatDate(t.date)}</td>
                       <td style={{ textAlign: 'right' }}><span className="table-amount expense">–{formatCurrency(t.amount)}</span></td>
-                      <td style={{ whiteSpace: "nowrap" }}><button className="del-btn always" onClick={() => startEdit(t)}>✎</button><button className="del-btn always" onClick={() => dispatch({ type: "DELETE_TRANSACTION", payload: t._id || t.id })}>✕</button></td>
+                      <td><span style={{ display: "inline-flex", gap: "0.25rem" }}><button className="del-btn always" onClick={() => startEdit(t)}>✎</button><button className="del-btn always" onClick={() => dispatch({ type: "DELETE_TRANSACTION", payload: t._id || t.id })}>✕</button></span></td>
                     </tr>
                   ))}
                 </tbody>
