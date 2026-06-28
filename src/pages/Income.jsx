@@ -1,3 +1,5 @@
+import SyncButton from '../components/SyncButton'
+import DataRow, { incomeColumns } from '../components/DataRow'
 import { useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import { createTransaction } from '../utils/models'
@@ -44,7 +46,7 @@ export default function Income() {
     e.preventDefault()
     if (!form.amount) return
     if (editingTx) {
-      dispatch({ type: 'UPDATE_TRANSACTION', payload: { id: editingTx.id, amount: Number(form.amount), date: form.date, note: form.source } })
+      dispatch({ type: 'UPDATE_TRANSACTION', payload: { _id: editingTx._id || editingTx.id, id: editingTx.id, amount: Number(form.amount), date: form.date, note: form.source } })
       setEditingTx(null)
     } else {
       dispatch({ type: 'ADD_TRANSACTION', payload: createTransaction({ amount: form.amount, type: 'income', categoryId: null, date: form.date, note: form.source }) })
@@ -63,7 +65,10 @@ export default function Income() {
     <div>
       <div className="page-header">
         <h1>Income</h1>
-        <button className="btn btn-primary" onClick={() => { setEditingTx(null); setForm({ amount: '', source: '', date: new Date().toISOString().slice(0, 10) }); setShowForm(true) }}>+ Add Income</button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <SyncButton />
+          <button className="btn btn-primary" onClick={() => { setEditingTx(null); setForm({ amount: '', source: '', date: new Date().toISOString().slice(0, 10) }); setShowForm(true) }}>+ Add Income</button>
+        </div>
       </div>
 
       <MonthPicker month={month} setMonth={(m) => { setMonth(m); setSelectedDate(null) }} transactions={state.transactions.filter(t => t.type === 'income' && t.date.startsWith(month))} onDateSelect={setSelectedDate} />
@@ -79,8 +84,8 @@ export default function Income() {
         <table className="data-table">
           <thead>
             <tr>
-              <th className="sortable" onClick={() => toggleSort('name')}>Source{sortIcon('name')}</th>
               <th className="sortable" onClick={() => toggleSort('date')}>Date{sortIcon('date')}</th>
+              <th className="sortable" onClick={() => toggleSort('name')}>Source{sortIcon('name')}</th>
               <th className="sortable" style={{ textAlign: 'right' }} onClick={() => toggleSort('amount')}>Amount{sortIcon('amount')}</th>
               <th></th>
             </tr>
@@ -90,17 +95,7 @@ export default function Income() {
               <tr><td colSpan="4" style={{ color: 'var(--text-muted)', padding: '2rem', textAlign: 'center' }}>No income this month.</td></tr>
             )}
             {incomes.map((t) => (
-              <tr key={t.id}>
-                <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <span className="table-icon" style={{ background: 'var(--green-light)' }}>💵</span>
-                    <span className="table-name">{t.note || 'Income'}</span>
-                  </div>
-                </td>
-                <td className="table-muted">{formatDate(t.date)}</td>
-                <td style={{ textAlign: 'right' }}><span className="table-amount income">+{formatCurrency(t.amount)}</span></td>
-                <td style={{ display: 'flex', gap: '0.25rem' }}><button className="del-btn always" onClick={() => startEdit(t)}>✎</button><button className="del-btn always" onClick={() => dispatch({ type: 'DELETE_TRANSACTION', payload: t.id })}>✕</button></td>
-              </tr>
+              <DataRow key={t._id || t.id} item={t} columns={incomeColumns} onEdit={startEdit} onDelete={(id) => dispatch({ type: 'DELETE_TRANSACTION', payload: id })} />
             ))}
           </tbody>
         </table>

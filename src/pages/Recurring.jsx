@@ -1,3 +1,5 @@
+import SyncButton from '../components/SyncButton'
+import DataRow, { recurringColumns } from '../components/DataRow'
 import { useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import { createRecurringExpense } from '../utils/models'
@@ -43,7 +45,7 @@ export default function Recurring() {
     e.preventDefault()
     if (!form.name || !form.amount) return
     if (editingRec) {
-      dispatch({ type: 'UPDATE_RECURRING', payload: { id: editingRec.id, name: form.name, amount: Number(form.amount), frequency: form.frequency, categoryId: form.categoryId } })
+      dispatch({ type: 'UPDATE_RECURRING', payload: { _id: editingRec._id || editingRec.id, id: editingRec.id, name: form.name, amount: Number(form.amount), frequency: form.frequency, categoryId: form.categoryId } })
       setEditingRec(null)
     } else {
       dispatch({ type: 'ADD_RECURRING', payload: createRecurringExpense(form) })
@@ -62,7 +64,10 @@ export default function Recurring() {
     <div>
       <div className="page-header">
         <h1>Subscriptions</h1>
-        <button className="btn btn-primary" onClick={() => { setEditingRec(null); setForm({ name: '', amount: '', frequency: 'monthly', categoryId: '' }); setShowForm(true) }}>+ Add</button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <SyncButton />
+          <button className="btn btn-primary" onClick={() => { setEditingRec(null); setForm({ name: '', amount: '', frequency: 'monthly', categoryId: '' }); setShowForm(true) }}>+ Add</button>
+        </div>
       </div>
 
       <div className="card" style={{ marginBottom: '1.5rem' }}>
@@ -95,12 +100,7 @@ export default function Recurring() {
                 <table className="data-table">
                   <tbody>
                     {catItems.map((r) => (
-                      <tr key={r.id}>
-                        <td><span className="table-name">{r.name}</span></td>
-                        <td><span className="tx-badge">{r.frequency.charAt(0).toUpperCase() + r.frequency.slice(1)}</span></td>
-                        <td style={{ textAlign: 'right' }}><span className="table-amount expense">{formatCurrency(r.amount)}</span></td>
-                        <td style={{ display: "flex", gap: "0.25rem" }}><button className="del-btn always" onClick={() => startEdit(r)}>✎</button><button className="del-btn always" onClick={() => dispatch({ type: "DELETE_RECURRING", payload: r.id })}>✕</button></td>
-                      </tr>
+                      <DataRow key={r._id || r.id} item={r} columns={recurringColumns(getCat)} onEdit={startEdit} onDelete={(id) => dispatch({ type: 'DELETE_RECURRING', payload: id })} />
                     ))}
                   </tbody>
                 </table>
@@ -113,12 +113,7 @@ export default function Recurring() {
               <table className="data-table">
                 <tbody>
                   {sorted.filter((r) => !state.categories.find((c) => c.id === r.categoryId)).map((r) => (
-                    <tr key={r.id}>
-                      <td><span className="table-name">{r.name}</span></td>
-                      <td><span className="tx-badge">{r.frequency.charAt(0).toUpperCase() + r.frequency.slice(1)}</span></td>
-                      <td style={{ textAlign: 'right' }}><span className="table-amount expense">{formatCurrency(r.amount)}</span></td>
-                      <td style={{ display: "flex", gap: "0.25rem" }}><button className="del-btn always" onClick={() => startEdit(r)}>✎</button><button className="del-btn always" onClick={() => dispatch({ type: "DELETE_RECURRING", payload: r.id })}>✕</button></td>
-                    </tr>
+                    <DataRow key={r._id || r.id} item={r} columns={recurringColumns(getCat)} onEdit={startEdit} onDelete={(id) => dispatch({ type: 'DELETE_RECURRING', payload: id })} />
                   ))}
                 </tbody>
               </table>
@@ -141,23 +136,9 @@ export default function Recurring() {
             {sorted.length === 0 && (
               <tr><td colSpan="5" style={{ color: 'var(--text-muted)', padding: '2rem', textAlign: 'center' }}>No subscriptions yet.</td></tr>
             )}
-            {sorted.map((r) => {
-              const cat = getCat(r.categoryId)
-              return (
-                <tr key={r.id}>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                      <span className="table-icon" style={{ background: 'var(--purple-light)' }}>{catEmojis[cat?.name] || '📅'}</span>
-                      <span className="table-name">{r.name}</span>
-                    </div>
-                  </td>
-                  <td><span className="tx-badge">{cat?.name || '—'}</span></td>
-                  <td><span className="tx-badge">{r.frequency.charAt(0).toUpperCase() + r.frequency.slice(1)}</span></td>
-                  <td style={{ textAlign: 'right' }}><span className="table-amount expense">{formatCurrency(r.amount)}</span></td>
-                  <td style={{ display: "flex", gap: "0.25rem" }}><button className="del-btn always" onClick={() => startEdit(r)}>✎</button><button className="del-btn always" onClick={() => dispatch({ type: "DELETE_RECURRING", payload: r.id })}>✕</button></td>
-                </tr>
-              )
-            })}
+            {sorted.map((r) => (
+              <DataRow key={r._id || r.id} item={r} columns={recurringColumns(getCat)} onEdit={startEdit} onDelete={(id) => dispatch({ type: 'DELETE_RECURRING', payload: id })} />
+            ))}
           </tbody>
         </table>
       </div>

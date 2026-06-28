@@ -15,6 +15,8 @@ async function request(path, options = {}) {
 }
 
 export const api = {
+  raw: (path, options = {}) => request(path, options),
+
   getTransactions: () => request('/transactions'),
   addTransaction: (data) => request('/transactions', { method: 'POST', body: JSON.stringify(data) }),
   updateTransaction: (id, data) => request(`/transactions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),

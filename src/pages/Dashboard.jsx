@@ -5,6 +5,8 @@ import { formatCurrency, getCurrentMonth, getMonthLabel, shiftMonth } from '../u
 import { getCategoryBudgetStatuses, getOverallBudgetForMonth } from '../services/budgetService'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import MonthPicker from '../components/MonthPicker'
+import PlaidLinkButton, { LinkedAccounts } from '../components/PlaidLinkButton'
+import SyncButton from '../components/SyncButton'
 
 export default function Dashboard() {
   const { state } = useAppContext()
@@ -35,7 +37,12 @@ export default function Dashboard() {
 
   return (
     <div>
-      <MonthPicker month={month} setMonth={setMonth} transactions={monthTx} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <MonthPicker month={month} setMonth={setMonth} transactions={monthTx} />
+        <PlaidLinkButton />
+      </div>
+
+      <LinkedAccounts />
 
       <div className="grid-2">
         <div className="card">
@@ -107,7 +114,7 @@ export default function Dashboard() {
           {recentTx.map((t) => {
             const cat = getCat(t.categoryId)
             return (
-              <div className="tx-row" key={t.id} onClick={() => navigate(t.type === 'income' ? '/income' : '/expenses')}>
+              <div className="tx-row" key={t._id || t.id} onClick={() => navigate(t.type === 'income' ? '/income' : '/expenses')}>
                 <div className="tx-icon">{catEmojis[cat?.name] || (t.type === 'income' ? '💵' : '📦')}</div>
                 <div className="tx-info">
                   <div className="name">{t.note || cat?.name || 'Transaction'}</div>

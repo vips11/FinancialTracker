@@ -20,7 +20,7 @@ export default function CategoryDetail() {
   const [sortKey, setSortKey] = useState('date')
   const [sortDir, setSortDir] = useState('desc')
 
-  const category = state.categories.find((c) => c.id === id)
+  const category = state.categories.find((c) => (c._id || c.id) === id)
   if (!category) return <p>Category not found.</p>
 
   const monthTx = state.transactions.filter((t) => t.type === 'expense' && t.categoryId === id && t.date.startsWith(month))
@@ -129,7 +129,7 @@ export default function CategoryDetail() {
               <tr><td colSpan="4" style={{ color: 'var(--text-muted)', padding: '2rem', textAlign: 'center' }}>No transactions{selectedDate ? ' on this date' : ' this month'}.</td></tr>
             )}
             {filteredTx.map((t) => (
-              <tr key={t.id}>
+              <tr key={t._id || t.id}>
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                     <span className="table-icon" style={{ background: `${category.color}15` }}>📦</span>
@@ -138,7 +138,7 @@ export default function CategoryDetail() {
                 </td>
                 <td className="table-muted">{formatDate(t.date)}</td>
                 <td style={{ textAlign: 'right' }}><span className="table-amount expense">–{formatCurrency(t.amount)}</span></td>
-                <td><button className="del-btn always" onClick={() => dispatch({ type: 'DELETE_TRANSACTION', payload: t.id })}>✕</button></td>
+                <td><button className="del-btn always" onClick={() => dispatch({ type: 'DELETE_TRANSACTION', payload: t._id || t.id })}>✕</button></td>
               </tr>
             ))}
           </tbody>

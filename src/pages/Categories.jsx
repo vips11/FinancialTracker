@@ -137,7 +137,7 @@ export default function Categories() {
               <tr><td colSpan="3" style={{ color: 'var(--text-muted)', padding: '2rem', textAlign: 'center' }}>No categories yet.</td></tr>
             )}
             {state.categories.map((cat) => (
-              <tr key={cat.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/categories/${cat.id}`)}>
+              <tr key={cat._id || cat.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/categories/${cat._id || cat.id}`)}>
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                     <div style={{ width: 4, height: 28, borderRadius: 2, background: cat.color }} />

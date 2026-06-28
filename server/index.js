@@ -17,6 +17,7 @@ app.use('/api/transactions', transactionsRouter)
 app.use('/api/categories', categoriesRouter)
 app.use('/api/recurring', recurringRouter)
 app.use('/api/settings', settingsRouter)
+app.use('/api/plaid', require('./routes/plaid'))
 
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {

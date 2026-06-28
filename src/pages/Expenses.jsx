@@ -1,3 +1,5 @@
+import SyncButton from '../components/SyncButton'
+import DataRow, { txColumns } from '../components/DataRow'
 import { useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import { createTransaction } from '../utils/models'
@@ -49,7 +51,7 @@ export default function Expenses() {
     e.preventDefault()
     if (!form.amount || !form.categoryId) return
     if (editingTx) {
-      dispatch({ type: 'UPDATE_TRANSACTION', payload: { id: editingTx.id, amount: Number(form.amount), categoryId: form.categoryId, date: form.date, note: form.note } })
+      dispatch({ type: 'UPDATE_TRANSACTION', payload: { _id: editingTx._id || editingTx.id, id: editingTx.id, amount: Number(form.amount), categoryId: form.categoryId, date: form.date, note: form.note } })
       setEditingTx(null)
     } else {
       dispatch({ type: 'ADD_TRANSACTION', payload: createTransaction({ amount: form.amount, type: 'expense', categoryId: form.categoryId, date: form.date, note: form.note }) })
@@ -68,7 +70,10 @@ export default function Expenses() {
     <div>
       <div className="page-header">
         <h1>Expenses</h1>
-        <button className="btn btn-primary" onClick={() => { setEditingTx(null); setForm({ amount: '', categoryId: '', date: new Date().toISOString().slice(0, 10), note: '' }); setShowForm(true) }}>+ Add Expense</button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <SyncButton />
+          <button className="btn btn-primary" onClick={() => { setEditingTx(null); setForm({ amount: '', categoryId: '', date: new Date().toISOString().slice(0, 10), note: '' }); setShowForm(true) }}>+ Add Expense</button>
+        </div>
       </div>
 
       <MonthPicker month={month} setMonth={(m) => { setMonth(m); setSelectedDate(null) }} transactions={state.transactions.filter(t => t.type === 'expense' && t.date.startsWith(month))} onDateSelect={setSelectedDate} />
@@ -103,11 +108,11 @@ export default function Expenses() {
                 <table className="data-table">
                   <tbody>
                     {catTx.map((t) => (
-                      <tr key={t.id}>
+                      <tr key={t._id || t.id}>
                         <td><span className="table-name">{t.note || 'Expense'}</span></td>
                         <td className="table-muted">{formatDate(t.date)}</td>
                         <td style={{ textAlign: 'right' }}><span className="table-amount expense">–{formatCurrency(t.amount)}</span></td>
-                        <td style={{ display: "flex", gap: "0.25rem" }}><button className="del-btn always" onClick={() => startEdit(t)}>✎</button><button className="del-btn always" onClick={() => dispatch({ type: "DELETE_TRANSACTION", payload: t.id })}>✕</button></td>
+                        <td style={{ whiteSpace: "nowrap" }}><button className="del-btn always" onClick={() => startEdit(t)}>✎</button><button className="del-btn always" onClick={() => dispatch({ type: "DELETE_TRANSACTION", payload: t._id || t.id })}>✕</button></td>
                       </tr>
                     ))}
                   </tbody>
@@ -121,11 +126,11 @@ export default function Expenses() {
               <table className="data-table">
                 <tbody>
                   {expenses.filter((t) => !state.categories.find((c) => c.id === t.categoryId)).map((t) => (
-                    <tr key={t.id}>
+                    <tr key={t._id || t.id}>
                       <td><span className="table-name">{t.note || 'Expense'}</span></td>
                       <td className="table-muted">{formatDate(t.date)}</td>
                       <td style={{ textAlign: 'right' }}><span className="table-amount expense">–{formatCurrency(t.amount)}</span></td>
-                      <td style={{ display: "flex", gap: "0.25rem" }}><button className="del-btn always" onClick={() => startEdit(t)}>✎</button><button className="del-btn always" onClick={() => dispatch({ type: "DELETE_TRANSACTION", payload: t.id })}>✕</button></td>
+                      <td style={{ whiteSpace: "nowrap" }}><button className="del-btn always" onClick={() => startEdit(t)}>✎</button><button className="del-btn always" onClick={() => dispatch({ type: "DELETE_TRANSACTION", payload: t._id || t.id })}>✕</button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -138,9 +143,9 @@ export default function Expenses() {
         <table className="data-table">
           <thead>
             <tr>
+              <th className="sortable" onClick={() => toggleSort('date')}>Date{sortIcon('date')}</th>
               <th className="sortable" onClick={() => toggleSort('name')}>Name{sortIcon('name')}</th>
               <th className="sortable" onClick={() => toggleSort('category')}>Category{sortIcon('category')}</th>
-              <th className="sortable" onClick={() => toggleSort('date')}>Date{sortIcon('date')}</th>
               <th className="sortable" style={{ textAlign: 'right' }} onClick={() => toggleSort('amount')}>Amount{sortIcon('amount')}</th>
               <th></th>
             </tr>
@@ -149,23 +154,9 @@ export default function Expenses() {
             {expenses.length === 0 && (
               <tr><td colSpan="5" style={{ color: 'var(--text-muted)', padding: '2rem', textAlign: 'center' }}>No expenses this month.</td></tr>
             )}
-            {expenses.map((t) => {
-              const cat = getCat(t.categoryId)
-              return (
-                <tr key={t.id}>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                      <span className="table-icon" style={{ background: 'var(--red-light)' }}>{catEmojis[cat?.name] || '📦'}</span>
-                      <span className="table-name">{t.note || cat?.name || 'Expense'}</span>
-                    </div>
-                  </td>
-                  <td><span className="tx-badge">{cat?.name || 'Uncategorized'}</span></td>
-                  <td className="table-muted">{formatDate(t.date)}</td>
-                  <td style={{ textAlign: 'right' }}><span className="table-amount expense">–{formatCurrency(t.amount)}</span></td>
-                  <td style={{ display: "flex", gap: "0.25rem" }}><button className="del-btn always" onClick={() => startEdit(t)}>✎</button><button className="del-btn always" onClick={() => dispatch({ type: "DELETE_TRANSACTION", payload: t.id })}>✕</button></td>
-                </tr>
-              )
-            })}
+            {expenses.map((t) => (
+              <DataRow key={t._id || t.id} item={t} columns={txColumns(getCat)} onEdit={startEdit} onDelete={(id) => dispatch({ type: 'DELETE_TRANSACTION', payload: id })} />
+            ))}
           </tbody>
         </table>
       </div>

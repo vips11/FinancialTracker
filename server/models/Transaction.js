@@ -12,6 +12,7 @@ const transactionSchema = new mongoose.Schema({
   merchantName: String,
   pending: { type: Boolean, default: false },
   recurring: { type: Boolean, default: false },
+  plaidTransactionId: { type: String, index: true, sparse: true },
 }, { timestamps: true })
 
 module.exports = mongoose.model('Transaction', transactionSchema)
