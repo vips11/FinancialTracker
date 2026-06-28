@@ -1,8 +1,10 @@
 import { NavLink } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
 
 export default function Sidebar() {
   const { state, dispatch } = useAppContext()
+  const { user, logout } = useAuth()
   const theme = state.settings.theme
 
   return (
@@ -31,8 +33,17 @@ export default function Sidebar() {
         </NavLink>
       </nav>
       <div className="sidebar-bottom">
+        {user && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', fontSize: '0.75rem' }}>
+            <img src={user.photoURL} alt="" style={{ width: 28, height: 28, borderRadius: '50%' }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.displayName}</span>
+          </div>
+        )}
         <button className="theme-toggle" onClick={() => dispatch({ type: 'UPDATE_SETTINGS', payload: { theme: theme === 'dark' ? 'light' : 'dark' } })}>
           {theme === 'dark' ? '☀️ Light mode' : '🌙 Dark mode'}
+        </button>
+        <button className="theme-toggle" onClick={logout} style={{ marginTop: '0.5rem' }}>
+          🚪 Sign out
         </button>
       </div>
     </aside>

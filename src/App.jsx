@@ -1,6 +1,6 @@
 import { HashRouter, Routes, Route } from 'react-router-dom'
-import { useEffect } from 'react'
-import { AppProvider, useAppContext } from './context/AppContext'
+import { AppProvider } from './context/AppContext'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import Sidebar from './components/Sidebar'
 import Dashboard from './pages/Dashboard'
 import Income from './pages/Income'
@@ -8,13 +8,12 @@ import Expenses from './pages/Expenses'
 import Recurring from './pages/Recurring'
 import Categories from './pages/Categories'
 import CategoryDetail from './pages/CategoryDetail'
+import Login from './pages/Login'
 
 function Layout() {
-  const { state } = useAppContext()
+  const { user } = useAuth()
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', state.settings.theme)
-  }, [state.settings.theme])
+  if (!user) return <Login />
 
   return (
     <div className="app-layout">
@@ -35,10 +34,12 @@ function Layout() {
 
 export default function App() {
   return (
-    <AppProvider>
-      <HashRouter>
-        <Layout />
-      </HashRouter>
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <HashRouter>
+          <Layout />
+        </HashRouter>
+      </AppProvider>
+    </AuthProvider>
   )
 }
